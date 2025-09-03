@@ -3,13 +3,13 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { sendSMS, sendEmail } = require('../services/communication');
-const { rateLimiter } = require('../middleware/rateLimiter');
+const { createRateLimiter } = require('../middleware/rateLimiter');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
 
 // Rate limiting for auth endpoints
-const authLimiter = rateLimiter({
+const authLimiter = createRateLimiter({
   keyGenerator: (req) => req.ip,
   points: 5, // 5 attempts
   duration: 15 * 60, // 15 minutes
@@ -314,7 +314,7 @@ router.post('/verify-login', [
 router.post('/resend-otp', [
   body('userId').isMongoId().withMessage('Invalid user ID'),
   body('type').isIn(['login', 'registration']).withMessage('Invalid OTP type')
-], rateLimiter({
+], createRateLimiter({
   keyGenerator: (req) => `${req.ip}-${req.body.userId}`,
   points: 3, // 3 resend attempts
   duration: 60 * 60, // 1 hour

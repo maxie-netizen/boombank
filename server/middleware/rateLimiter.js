@@ -30,17 +30,18 @@ const createRateLimiter = (options) => {
       await rateLimiter.consume(key);
       next();
     } catch (error) {
-      if (error.msBeforeNext) {
-        res.set('Retry-After', Math.ceil(error.msBeforeNext / 1000));
-        res.set('X-RateLimit-Limit', points);
-        res.set('X-RateLimit-Remaining', error.remainingPoints);
-        res.set('X-RateLimit-Reset', new Date(Date.now() + error.msBeforeNext));
-      }
+      // Handle rate limit exceeded
+      const retryAfter = error.msBeforeNext ? Math.ceil(error.msBeforeNext / 1000) : 60;
+      
+      res.set('Retry-After', retryAfter);
+      res.set('X-RateLimit-Limit', points);
+      res.set('X-RateLimit-Remaining', error.remainingPoints || 0);
+      res.set('X-RateLimit-Reset', new Date(Date.now() + (error.msBeforeNext || 60000)));
       
       res.status(429).json({
         error: 'Too many requests',
         message: 'Rate limit exceeded. Please try again later.',
-        retryAfter: Math.ceil(error.msBeforeNext / 1000)
+        retryAfter: retryAfter
       });
     }
   };

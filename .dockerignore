@@ -68,10 +68,6 @@ jspm_packages/
 # Nuxt.js build / generate output
 .nuxt
 
-# Gatsby files
-.cache/
-public
-
 # Storybook build outputs
 .out
 .storybook-out
@@ -121,4 +117,3 @@ tests
 .eslintrc*
 .prettierrc*
 jest.config.*
-tsconfig.json

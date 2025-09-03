@@ -29,7 +29,7 @@ RUN npm ci --only=production --silent
 FROM base AS frontend-build
 WORKDIR /app
 
-# Copy frontend source
+# Copy all source files first
 COPY . .
 
 # Install all dependencies for build
@@ -56,11 +56,14 @@ COPY --from=frontend-build --chown=nextjs:nodejs /app/package.json ./package.jso
 # Copy backend from deps stage
 COPY --from=deps --chown=nextjs:nodejs /app/server ./server
 
-# Copy necessary configuration files
-COPY --chown=nextjs:nodejs .env.example .env
-COPY --chown=nextjs:nodejs next.config.js ./
-COPY --chown=nextjs:nodejs tailwind.config.js ./
-COPY --chown=nextjs:nodejs tsconfig.json ./
+# Copy necessary configuration files from frontend-build stage
+COPY --from=frontend-build --chown=nextjs:nodejs /app/next.config.js ./
+COPY --from=frontend-build --chown=nextjs:nodejs /app/tailwind.config.js ./
+COPY --from=frontend-build --chown=nextjs:nodejs /app/tsconfig.json ./
+COPY --from=frontend-build --chown=nextjs:nodejs /app/postcss.config.js ./
+
+# Copy environment template and create .env
+COPY --from=frontend-build --chown=nextjs:nodejs /app/env.example ./.env
 
 # Create logs directory
 RUN mkdir -p logs && chown nextjs:nodejs logs
@@ -75,5 +78,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD node -e "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })" || exit 1
 
-# Start command for Render
-CMD ["npm", "start"]
+# Start command for Render - run the server which handles both frontend and backend
+CMD ["npm", "run", "server"]

@@ -3,12 +3,12 @@ const { body, validationResult } = require('express-validator');
 const Game = require('../models/Game');
 const User = require('../models/User');
 const auth = require('../middleware/auth');
-const { rateLimiter } = require('../middleware/middleware/rateLimiter');
+const { createRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
 // Rate limiting for game actions
-const gameLimiter = rateLimiter({
+const gameLimiter = createRateLimiter({
   keyGenerator: (req) => req.user.userId,
   points: 100, // 100 game actions
   duration: 60 * 60, // 1 hour

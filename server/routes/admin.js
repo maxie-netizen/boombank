@@ -1,15 +1,16 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Game = require('../models/Game');
 const Transaction = require('../models/Transaction');
-const adminAuth = require('../middleware/adminAuth');
-const { rateLimiter } = require('../middleware/rateLimiter');
+const { adminAuth } = require('../middleware/auth');
+const { createRateLimiter } = require('../middleware/rateLimiter');
 
 const router = express.Router();
 
 // Admin rate limiting
-const adminLimiter = rateLimiter({
+const adminLimiter = createRateLimiter({
   keyGenerator: (req) => req.ip,
   points: 1000, // 1000 admin actions
   duration: 60 * 60, // 1 hour

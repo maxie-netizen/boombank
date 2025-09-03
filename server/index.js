@@ -8,6 +8,7 @@ const { Server } = require('socket.io');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const rateLimit = require('express-rate-limit');
+const path = require('path'); // Added for static file serving
 
 // Load environment variables
 dotenv.config();
@@ -53,9 +54,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/boombank'
 // Import routes
 const authRoutes = require('./routes/auth');
 const gameRoutes = require('./routes/game');
-const userRoutes = require('./routes/user');
 const adminRoutes = require('./routes/admin');
-const apiRoutes = require('./routes/api');
 const paymentRoutes = require('./routes/payment');
 
 // Import services
@@ -64,9 +63,7 @@ const cronService = require('./services/cronService');
 // Use routes
 app.use('/api/auth', authRoutes);
 app.use('/api/game', gameRoutes);
-app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/external', apiRoutes);
 app.use('/api/payment', paymentRoutes);
 
 // Health check endpoint for Render monitoring
@@ -120,6 +117,73 @@ io.on('connection', (socket) => {
   });
 });
 
+// Serve static files from Next.js build
+if (process.env.NODE_ENV === 'production') {
+  const fs = require('fs');
+  
+  // Check if Next.js build exists
+  const nextBuildPath = path.join(__dirname, '../.next');
+  const publicPath = path.join(__dirname, '../public');
+  
+  if (fs.existsSync(nextBuildPath)) {
+    // Serve static files from .next/static
+    app.use('/_next/static', express.static(path.join(__dirname, '../.next/static')));
+    
+    // Serve public files if they exist
+    if (fs.existsSync(publicPath)) {
+      app.use('/public', express.static(publicPath));
+    }
+    
+    // Serve the main page for client-side routing (App Router)
+    app.get('*', (req, res) => {
+      const mainPagePath = path.join(__dirname, '../.next/server/app/page.html');
+      
+      if (fs.existsSync(mainPagePath)) {
+        res.sendFile(mainPagePath);
+      } else {
+        // Fallback: serve a simple HTML that redirects to the main app
+        res.send(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>BoomBank</title>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1">
+            </head>
+            <body>
+              <div id="root">Loading BoomBank...</div>
+              <script>
+                window.location.href = '/';
+              </script>
+            </body>
+          </html>
+        `);
+      }
+    });
+  } else {
+    // If Next.js build doesn't exist, serve a simple message
+    app.get('*', (req, res) => {
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>BoomBank</title>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+          </head>
+          <body>
+            <div id="root">
+              <h1>BoomBank</h1>
+              <p>Application is starting up...</p>
+              <p>Please wait a moment and refresh the page.</p>
+            </div>
+          </body>
+        </html>
+      `);
+    });
+  }
+}
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -129,12 +193,14 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ error: 'Route not found' });
-});
+// 404 handler (only for API routes in production)
+if (process.env.NODE_ENV !== 'production') {
+  app.use('*', (req, res) => {
+    res.status(404).json({ error: 'Route not found' });
+  });
+}
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
   console.log(`🚀 Boombank Server running on port ${PORT}`);
@@ -144,8 +210,13 @@ server.listen(PORT, () => {
   console.log(`🔌 Socket.IO: http://localhost:${PORT}`);
   
   // Start cron service for M-Pesa transaction processing
-  cronService.start();
-  console.log(`💳 M-Pesa cron service started`);
+  try {
+    cronService.start();
+    console.log(`💳 M-Pesa cron service started`);
+  } catch (error) {
+    console.error(`❌ Failed to start cron service:`, error.message);
+    console.log(`⚠️  M-Pesa transaction processing will not be available`);
+  }
 });
 
 // Graceful shutdown
