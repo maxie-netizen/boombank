@@ -1,0 +1,63 @@
+{
+  "name": "boombank",
+  "version": "1.0.0",
+  "description": "Boombank - Advanced Minesweeper Betting Game with OTP Authentication and Admin Dashboard",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:client": "next dev",
+    "dev:server": "nodemon server/index.js",
+    "build": "next build",
+    "start": "next start",
+    "server": "node server/index.js",
+    "server:dev": "nodemon server/index.js",
+    "install:all": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": [
+    "minesweeper",
+    "betting",
+    "game",
+    "otp",
+    "admin",
+    "api"
+  ],
+  "author": "Boombank Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  },
+  "dependencies": {
+    "next": "^14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "tailwindcss": "^3.3.6",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "twilio": "^4.19.0",
+    "nodemailer": "^6.9.7",
+    "rate-limiter-flexible": "^3.0.8",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.7.4",
+    "socket.io-client": "^4.7.4",
+    "axios": "^1.6.2",
+    "faker": "^6.6.6",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1",
+    "qrcode": "^1.5.3",
+    "crypto": "^1.0.1"
+  }
+}

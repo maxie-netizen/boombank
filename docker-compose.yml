@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6.0
+    container_name: boombank-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: boombank
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - boombank-network
+
+  # BoomBank Application
+  boombank:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    container_name: boombank-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/boombank?authSource=admin
+      - JWT_SECRET=your-super-secret-jwt-key-here
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin123
+      # M-Pesa Configuration (update with your credentials)
+      - MPESA_BASE_URL=https://sandbox.safaricom.co.ke
+      - MPESA_CONSUMER_KEY=your_mpesa_consumer_key
+      - MPESA_CONSUMER_SECRET=your_mpesa_consumer_secret
+      - MPESA_PASSKEY=your_mpesa_passkey
+      - MPESA_SHORTCODE=your_mpesa_shortcode
+      - MPESA_BUSINESS_SHORTCODE=your_mpesa_business_shortcode
+      - MPESA_PARTY_A=your_mpesa_party_a
+      - MPESA_PARTY_B=your_mpesa_party_b
+      - MPESA_CALLBACK_URL=https://yourdomain.com/api/payment/mpesa/callback
+      - MPESA_TIMEOUT_URL=https://yourdomain.com/api/payment/mpesa/timeout
+      - MPESA_ACCOUNT_REFERENCE=BOOMBANK
+      - MPESA_TRANSACTION_DESC=BoomBank Payment
+    depends_on:
+      - mongodb
+    networks:
+      - boombank-network
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1) })"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Redis (optional, for session storage and caching)
+  redis:
+    image: redis:7-alpine
+    container_name: boombank-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - boombank-network
+    command: redis-server --appendonly yes
+
+volumes:
+  mongodb_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  boombank-network:
+    driver: bridge

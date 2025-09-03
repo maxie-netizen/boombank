@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoomBank - Minesweeper Betting</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #10b981;
+      --secondary: #3b82f6;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --dark: #0f172a;
+      --darker: #020617;
+      --light: #f8fafc;
+      --gray: #94a3b8;
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Montserrat', sans-serif;
+    }
+    body {
+      background: var(--dark);
+      color: var(--light);
+      overflow-x: hidden;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    #app {
+      flex: 1;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 80px;
+      width: 100%;
+      position: relative;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .menu-btn {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .menu {
+      position: fixed;
+      top: 0;
+      left: -300px;
+      width: 300px;
+      height: 100%;
+      background: var(--darker);
+      z-index: 1000;
+      transition: left 0.3s;
+      padding: 20px;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    }
+    .menu.open {
+      left: 0;
+    }
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .menu-links {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .menu-link {
+      color: var(--light);
+      text-decoration: none;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+    .menu-link:hover {
+      background: rgba(255,255,255,0.1);
+    }
+    .menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      display: none;
+    }
+    .menu-overlay.open {
+      display: block;
+    }
+    .balance {
+      font-size: 24px;
+      font-weight: 900;
+    }
+    .balance span {
+      color: var(--primary);
+      text-shadow: 0 0 10px var(--primary);
+    }
+    .mode-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50px;
+      padding: 5px;
+      margin-bottom: 20px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 50px;
+      background: none;
+      color: var(--gray);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .mode-btn.active {
+      background: var(--primary);
+      color: white;
+    }
+    .bet-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input, button, select {
+      padding: 12px 20px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+    }
+    input {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      flex: 1;
+    }
+    button {
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    #bet-btn {
+      background: var(--primary);
+      color: white;
+    }
+    #cashout-btn {
+      background: var(--secondary);
+      color: white;
+      display: none;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .game-board {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    .tile {
+      aspect-ratio: 1;
+      background: #1e293b;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 900;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .tile:hover {
+      background: #334155;
+    }
+    .tile.revealed {
+      background: #10b981;
+      transform: scale(0.95);
+    }
+    .tile.bomb {
+      background: var(--danger);
+      animation: explode 0.5s;
+    }
+    @keyframes explode {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .multiplier {
+      text-align: center;
+      font-size: 32px;
+      margin: 20px 0;
+      font-weight: 900;
+      color: var(--primary);
+      text-shadow: 0 0 15px var(--primary);
+    }
+    .winners-feed {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .winners-feed h3 {
+      margin-bottom: 10px;
+      color: var(--secondary);
+    }
+    .winner {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .winner:last-child {
+      border-bottom: none;
+    }
+    .winner-amount {
+      color: var(--primary);
+      font-weight: 600;
+    }
+    .bet-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .bet-info span {
+      color: #94a3b8;
+    }
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--darker);
+      display: flex;
+      justify-content: space-around;
+      padding: 15px 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--gray);
+      text-decoration: none;
+      font-size: 12px;
+    }
+    .nav-item i {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+    .nav-item.active {
+      color: var(--primary);
+    }
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      display: none;
+    }
+    .modal.open {
+      display: flex;
+    }
+    .modal-content {
+      background: var(--dark);
+      padding: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--gray);
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--gray);
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .demo-warning {
+      background: var(--warning);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    @media (max-width: 600px) {
+      .game-board {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+      }
+      .bet-controls {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <button class="menu-btn" id="menu-btn">
+        <i class="fas fa-bars"></i>
+      </button>
+      <div class="balance">
+        Balance: $<span id="balance">1000</span>
+      </div>
+    </header>
+
+    <div class="menu-overlay" id="menu-overlay"></div>
+    <div class="menu" id="menu">
+      <div class="menu-header">
+        <h2>BoomBank</h2>
+        <button class="close-modal" id="close-menu">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="menu-links">
+        <a href="#" class="menu-link" id="profile-link">
+          <i class="fas fa-user"></i> Profile
+        </a>
+        <a href="#" class="menu-link" id="deposit-link">
+          <i class="fas fa-money-bill-wave"></i> Deposit
+        </a>
+        <a href="#" class="menu-link" id="withdraw-link">
+          <i class="fas fa-wallet"></i> Withdraw
+        </a>
+        <a href="#" class="menu-link" id="history-link">
+          <i class="fas fa-history"></i> History
+        </a>
+        <a href="#" class="menu-link" id="logout-link">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+    </div>
+
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="demo-btn">Demo</button>
+      <button class="mode-btn" id="real-btn">Real</button>
+    </div>
+
+    <div class="demo-warning" id="demo-warning">
+      DEMO MODE: Play with virtual money
+    </div>
+
+    <div class="bet-info">
+      <span>Min: $10 | Max: $1000</span>
+      <span id="bomb-count">Bombs: 5</span>
+    </div>
+
+    <div class="bet-controls">
+      <input type="number" id="bet-amount" min="10" max="1000" value="50" step="10">
+      <button id="bet-btn">BET</button>
+      <button id="cashout-btn">CASH OUT: <span id="multiplier">1.00</span>x</button>
+    </div>
+
+    <div class="multiplier" id="multiplier-display">1.00x</div>
+
+    <div class="game-board" id="board"></div>
+
+    <div class="winners-feed">
+      <h3>🏆 Recent Winners</h3>
+      <div id="winners-list">
+        <div class="winner">
+          <span class="username">722****90</span>
+          <span class="winner-amount">$3,200</span>
+        </div>
+        <div class="winner">
+          <span class="username">555****12</span>
+          <span class="winner-amount">$1,500</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="login-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Login</h2>
+          <button class="close-modal" id="close-login">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="login-phone" placeholder="2547XXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••">
+        </div>
+        <button class="submit-btn" id="login-btn">Login</button>
+        <p style="text-align: center; margin-top: 15px; color: var(--gray);">
+          Don't have an account? <a href="#" id="show-register">Register</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="modal" id="register-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Register</h2>
+          <button class="close-modal" id="close-register">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="register-name" placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" id="register-phone" placeholder="2547XXXXXXXX">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="register-password" placeholder="••••••••">
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="register-confirm" placeholder="••••••••">
+        </div>
+        <button class="submit-btn" id="register-btn">Register</button>
+        <p style="text-align: center; margin-top: 15px; color: var(--gray);">
+          Already have an account? <a href="#" id="show-login">Login</a>
+        </p>
+      </div>
+    </div>
+
+    <div class="modal" id="deposit-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Deposit</h2>
+          <button class="close-modal" id="close-deposit">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="form-group">
+          <label>Amount (Ksh)</label>
+          <input type="number" id="deposit-amount" placeholder="100">
+        </div>
+        <button class="submit-btn" id="deposit-btn">Deposit via M-Pesa</button>
+      </div>
+    </div>
+
+    <div class="modal" id="withdraw-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Withdraw</h2>
+          <button class="close-modal" id="close-withdraw">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="form-group">
+          <label>Amount (Ksh)</label>
+          <input type="number" id="withdraw-amount" placeholder="100">
+        </div>
+        <div class="form-group">
+          <label>M-Pesa Number</label>
+          <input type="tel" id="withdraw-phone" placeholder="2547XXXXXXXX">
+        </div>
+        <button class="submit-btn" id="withdraw-btn">Request Withdrawal</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <a href="#" class="nav-item active" id="nav-home">
+      <i class="fas fa-gamepad"></i>
+      <span>Play</span>
+    </a>
+    <a href="#" class="nav-item" id="nav-stats">
+      <i class="fas fa-chart-bar"></i>
+      <span>Stats</span>
+    </a>
+    <a href="#" class="nav-item" id="nav-history">
+      <i class="fas fa-history"></i>
+      <span>History</span>
+    </a>
+    <a href="#" class="nav-item" id="nav-account">
+      <i class="fas fa-user"></i>
+      <span>Account</span>
+    </a>
+  </div>
+
+  <audio id="click-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3"></audio>
+  <audio id="cashout-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
+  <audio id="explosion-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-explosion-impact-1684.mp3"></audio>
+
+  <script>
+    // Game Config
+    const MIN_BET = 10;
+    const MAX_BET = 1000;
+    const BASE_BOMB_PERCENTAGE = 0.25; // 25% bombs base
+    const HOUSE_EDGE = 0.05; // 5% house profit
+    const DEMO_MODE_MULTIPLIER_BOOST = 1.2; // Demo mode gives 20% better odds
+
+    // Game State
+    let balance = 1000;
+    let demoBalance = 5000;
+    let betAmount = 50;
+    let multiplier = 1.0;
+    let baseMultiplier = 1.14;
+    let isPlaying = false;
+    let isDemoMode = true;
+    let revealedTiles = [];
+    let bombs = [];
+    const gridSize = 5;
+    let currentUser = null;
+
+    // DOM Elements
+    const boardEl = document.getElementById('board');
+    const balanceEl = document.getElementById('balance');
+    const betAmountEl = document.getElementById('bet-amount');
+    const betBtn = document.getElementById('bet-btn');
+    const cashoutBtn = document.getElementById('cashout-btn');
+    const multiplierEl = document.getElementById('multiplier');
+    const multiplierDisplayEl = document.getElementById('multiplier-display');
+    const winnersListEl = document.getElementById('winners-list');
+    const bombCountEl = document.getElementById('bomb-count');
+    const demoBtn = document.getElementById('demo-btn');
+    const realBtn = document.getElementById('real-btn');
+    const demoWarningEl = document.getElementById('demo-warning');
+    const menuBtn = document.getElementById('menu-btn');
+    const menu = document.getElementById('menu');
+    const menuOverlay = document.getElementById('menu-overlay');
+    const closeMenuBtn = document.getElementById('close-menu');
+    const loginModal = document.getElementById('login-modal');
+    const registerModal = document.getElementById('register-modal');
+    const depositModal = document.getElementById('deposit-modal');
+    const withdrawModal = document.getElementById('withdraw-modal');
+    const closeLoginBtn = document.getElementById('close-login');
+    const closeRegisterBtn = document.getElementById('close-register');
+    const closeDepositBtn = document.getElementById('close-deposit');
+    const closeWithdrawBtn = document.getElementById('close-withdraw');
+    const showRegisterBtn = document.getElementById('show-register');
+    const showLoginBtn = document.getElementById('show-login');
+    const loginBtn = document.getElementById('login-btn');
+    const registerBtn = document.getElementById('register-btn');
+    const depositBtn = document.getElementById('deposit-btn');
+    const withdrawBtn = document.getElementById('withdraw-btn');
+    const profileLink = document.getElementById('profile-link');
+    const depositLink = document.getElementById('deposit-link');
+    const withdrawLink = document.getElementById('withdraw-link');
+    const logoutLink = document.getElementById('logout-link');
+    const navHome = document.getElementById('nav-home');
+    const navStats = document.getElementById('nav-stats');
+    const navHistory = document.getElementById('nav-history');
+    const navAccount = document.getElementById('nav-account');
+
+    // Sounds
+    const clickSound = document.getElementById('click-sound');
+    const cashoutSound = document.getElementById('cashout-sound');
+    const explosionSound = document.getElementById('explosion-sound');
+
+    // Initialize Board
+    function initBoard() {
+      boardEl.innerHTML = '';
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.dataset.index = i;
+        tile.addEventListener('click', () => handleTileClick(i));
+        boardEl.appendChild(tile);
+      }
+    }
+
+    // Calculate Dynamic Multiplier Based on Bet
+    function calculateBaseMultiplier(bet) {
+      // Higher bets get higher multipliers (but scaled for house edge)
+      let base = 1.14 + (0.01 * Math.log10(bet / 10)); // Logarithmic scaling
+      
+      // In demo mode, give better odds
+      if (isDemoMode) {
+        base *= DEMO_MODE_MULTIPLIER_BOOST;
+      }
+      
+      return base;
+    }
+
+    // Calculate bomb percentage based on bet amount
+    function calculateBombPercentage(bet) {
+      // Higher bets get more bombs (riskier)
+      const minBombs = 0.2; // 20%
+      const maxBombs = 0.35; // 35%
+      
+      // Scale between min and max based on bet amount
+      return minBombs + (maxBombs - minBombs) * (bet / MAX_BET);
+    }
+
+    // Start Game
+    function startGame() {
+      betAmount = parseInt(betAmountEl.value);
+      
+      if (betAmount < MIN_BET || betAmount > MAX_BET) {
+        alert(`Bet must be between $${MIN_BET} and $${MAX_BET}!`);
+        return;
+      }
+
+      // Check balance based on mode
+      if (isDemoMode) {
+        if (demoBalance < betAmount) {
+          alert('Not enough demo balance!');
+          return;
+        }
+        demoBalance -= betAmount;
+      } else {
+        if (balance < betAmount) {
+          alert('Not enough balance! Please deposit.');
+          return;
+        }
+        balance -= betAmount;
+      }
+      
+      updateBalance();
+      isPlaying = true;
+      revealedTiles = [];
+      baseMultiplier = calculateBaseMultiplier(betAmount);
+      multiplier = 1.0;
+      updateMultiplier();
+
+      // Calculate dynamic bomb percentage
+      const bombPercentage = calculateBombPercentage(betAmount);
+      const totalBombs = Math.floor(gridSize * gridSize * bombPercentage);
+      bombCountEl.textContent = `Bombs: ${totalBombs}`;
+
+      // Place bombs
+      bombs = [];
+      while (bombs.length < totalBombs) {
+        const randomIndex = Math.floor(Math.random() * gridSize * gridSize);
+        if (!bombs.includes(randomIndex)) {
+          bombs.push(randomIndex);
+        }
+      }
+
+      betBtn.style.display = 'none';
+      cashoutBtn.style.display = 'block';
+      initBoard();
+    }
+
+    // Handle Tile Click
+    function handleTileClick(index) {
+      if (!isPlaying || revealedTiles.includes(index)) return;
+
+      clickSound.currentTime = 0;
+      clickSound.play();
+
+      revealedTiles.push(index);
+      const tile = boardEl.children[index];
+      tile.classList.add('revealed');
+
+      // Check if bomb
+      if (bombs.includes(index)) {
+        endGame(false);
+        tile.classList.add('bomb');
+        explosionSound.play();
+        return;
+      }
+
+      // Increase multiplier (scaled by bet size)
+      const increment = 0.1 * (1 - HOUSE_EDGE) * (baseMultiplier / 1.14);
+      multiplier = parseFloat((multiplier + increment).toFixed(2));
+      updateMultiplier();
+    }
+
+    // Cash Out
+    function cashOut() {
+      cashoutSound.play();
+      const winnings = betAmount * multiplier;
+      
+      if (isDemoMode) {
+        demoBalance += winnings;
+      } else {
+        balance += winnings;
+      }
+      
+      updateBalance();
+      endGame(true);
+      
+      // Add to winners feed
+      addWinner(winnings);
+    }
+
+    // End Game
+    function endGame(win) {
+      isPlaying = false;
+      betBtn.style.display = 'block';
+      cashoutBtn.style.display = 'none';
+
+      // Reveal all bombs if lost
+      if (!win) {
+        bombs.forEach(index => {
+          const tile = boardEl.children[index];
+          tile.classList.add('bomb');
+        });
+      }
+    }
+
+    // Add Winner to Feed
+    function addWinner(amount) {
+      const username = currentUser 
+        ? `${currentUser.phone.slice(0, 3)}****${currentUser.phone.slice(-2)}`
+        : `${Math.floor(100 + Math.random() * 900)}****${Math.floor(10 + Math.random() * 90)}`;
+      
+      const mode = isDemoMode ? ' (DEMO)' : '';
+      
+      const winnerEl = document.createElement('div');
+      winnerEl.className = 'winner';
+      winnerEl.innerHTML = `
+        <span class="username">${username}${mode}</span>
+        <span class="winner-amount">$${amount.toFixed(2)}</span>
+      `;
+      winnersListEl.insertBefore(winnerEl, winnersListEl.firstChild);
+      
+      // Keep only 5 winners
+      if (winnersListEl.children.length > 5) {
+        winnersListEl.removeChild(winnersListEl.lastChild);
+      }
+    }
+
+    // Update Balance Display
+    function updateBalance() {
+      const bal = isDemoMode ? demoBalance : balance;
+      balanceEl.textContent = bal.toFixed(2);
+    }
+
+    function updateMultiplier() {
+      multiplierEl.textContent = multiplier.toFixed(2);
+      multiplierDisplayEl.textContent = `${multiplier.toFixed(2)}x`;
+    }
+
+    // Toggle Demo/Real Mode
+    function toggleMode(demo) {
+      isDemoMode = demo;
+      demoBtn.classList.toggle('active', demo);
+      realBtn.classList.toggle('active', !demo);
+      demoWarningEl.style.display = demo ? 'block' : 'none';
+      updateBalance();
+      
+      if (!demo && !currentUser) {
+        loginModal.classList.add('open');
+      }
+    }
+
+    // Auth Functions (Mock)
+    function login(phone, password) {
+      // In a real app, this would call your backend
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (phone && password) {
+            currentUser = {
+              name: "Test User",
+              phone: phone,
+              balance: 1000
+            };
+            balance = currentUser.balance;
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }, 1000);
+      });
+    }
+
+    function register(name, phone, password) {
+      // In a real app, this would call your backend
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (name && phone && password) {
+            currentUser = {
+              name: name,
+              phone: phone,
+              balance: 1000
+            };
+            balance = currentUser.balance;
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }, 1000);
+      });
+    }
+
+    // M-Pesa STK Push Simulation (Mock)
+    function mpesaDeposit(amount) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          balance += amount;
+          updateBalance();
+          resolve(true);
+        }, 3000);
+      });
+    }
+
+    function mpesaWithdraw(amount, phone) {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          if (balance >= amount) {
+            balance -= amount;
+            updateBalance();
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }, 3000);
+      });
+    }
+
+    // Event Listeners
+    betBtn.addEventListener('click', startGame);
+    cashoutBtn.addEventListener('click', cashOut);
+    betAmountEl.addEventListener('input', (e) => {
+      betAmount = parseInt(e.target.value);
+    });
+
+    demoBtn.addEventListener('click', () => toggleMode(true));
+    realBtn.addEventListener('click', () => toggleMode(false));
+
+    // Menu Toggle
+    menuBtn.addEventListener('click', () => {
+      menu.classList.add('open');
+      menuOverlay.classList.add('open');
+    });
+
+    closeMenuBtn.addEventListener('click', () => {
+      menu.classList.remove('open');
+      menuOverlay.classList.remove('open');
+    });
+
+    menuOverlay.addEventListener('click', () => {
+      menu.classList.remove('open');
+      menuOverlay.classList.remove('open');
+    });
+
+    // Modal Controls
+    closeLoginBtn.addEventListener('click', () => loginModal.classList.remove('open'));
+    closeRegisterBtn.addEventListener('click', () => registerModal.classList.remove('open'));
+    closeDepositBtn.addEventListener('click', () => depositModal.classList.remove('open'));
+    closeWithdrawBtn.addEventListener('click', () => withdrawModal.classList.remove('open'));
+
+    showRegisterBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginModal.classList.remove('open');
+      registerModal.classList.add('open');
+    });
+
+    showLoginBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      registerModal.classList.remove('open');
+      loginModal.classList.add('open');
+    });
+
+    // Auth Actions
+    loginBtn.addEventListener('click', async () => {
+      const phone = document.getElementById('login-phone').value;
+      const password = document.getElementById('login-password').value;
+      
+      if (!phone || !password) {
+        alert('Please enter phone and password');
+        return;
+      }
+      
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in...';
+      
+      const success = await login(phone, password);
+      
+      if (success) {
+        loginModal.classList.remove('open');
+        toggleMode(false);
+        alert(`Welcome back, ${currentUser.name}!`);
+      } else {
+        alert('Invalid phone or password');
+      }
+      
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Login';
+    });
+
+    registerBtn.addEventListener('click', async () => {
+      const name = document.getElementById('register-name').value;
+      const phone = document.getElementById('register-phone').value;
+      const password = document.getElementById('register-password').value;
+      const confirm = document.getElementById('register-confirm').value;
+      
+      if (!name || !phone || !password || !confirm) {
+        alert('Please fill all fields');
+        return;
+      }
+      
+      if (password !== confirm) {
+        alert('Passwords do not match');
+        return;
+      }
+      
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Registering...';
+      
+      const success = await register(name, phone, password);
+      
+      if (success) {
+        registerModal.classList.remove('open');
+        toggleMode(false);
+        alert(`Welcome to BoomBank, ${name}!`);
+      } else {
+        alert('Registration failed. Please try again.');
+      }
+      
+      registerBtn.disabled = false;
+      registerBtn.textContent = 'Register';
+    });
+
+    depositBtn.addEventListener('click', async () => {
+      const amount = parseInt(document.getElementById('deposit-amount').value);
+      
+      if (!amount || amount < 10) {
+        alert('Minimum deposit is $10');
+        return;
+      }
+      
+      depositBtn.disabled = true;
+      depositBtn.textContent = 'Processing...';
+      
+      const success = await mpesaDeposit(amount);
+      
+      if (success) {
+        depositModal.classList.remove('open');
+        alert(`Successfully deposited $${amount}!`);
+      } else {
+        alert('Deposit failed. Please try again.');
+      }
+      
+      depositBtn.disabled = false;
+      depositBtn.textContent = 'Deposit via M-Pesa';
+    });
+
+    withdrawBtn.addEventListener('click', async () => {
+      const amount = parseInt(document.getElementById('withdraw-amount').value);
+      const phone = document.getElementById('withdraw-phone').value;
+      
+      if (!amount || amount < 10) {
+        alert('Minimum withdrawal is $10');
+        return;
+      }
+      
+      if (!phone || phone.length !== 12) {
+        alert('Please enter a valid M-Pesa number (2547XXXXXXXX)');
+        return;
+      }
+      
+      withdrawBtn.disabled = true;
+      withdrawBtn.textContent = 'Processing...';
+      
+      const success = await mpesaWithdraw(amount, phone);
+      
+      if (success) {
+        withdrawModal.classList.remove('open');
+        alert(`Success! $${amount} will be sent to ${phone} shortly.`);
+      } else {
+        alert('Withdrawal failed. Insufficient balance.');
+      }
+      
+      withdrawBtn.disabled = false;
+      withdrawBtn.textContent = 'Request Withdrawal';
+    });
+
+    // Menu Links
+    profileLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      menu.classList.remove('open');
+      menuOverlay.classList.remove('open');
+      alert(`Profile:\nName: ${currentUser?.name || 'Guest'}\nPhone: ${currentUser?.phone || 'Not logged in'}`);
+    });
+
+    depositLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      menu.classList.remove('open');
+      menuOverlay.classList.remove('open');
+      if (!currentUser) {
+        loginModal.classList.add('open');
+      } else {
+        depositModal.classList.add('open');
+      }
+    });
+
+    withdrawLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      menu.classList.remove('open');
+      menuOverlay.classList.remove('open');
+      if (!currentUser) {
+        loginModal.classList.add('open');
+      } else {
+        withdrawModal.classList.add('open');
+      }
+    });
+
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      menu.classList.remove('open');
+      menuOverlay.classList.remove('open');
+      currentUser = null;
+      toggleMode(true);
+      alert('Logged out successfully');
+    });
+
+    // Bottom Nav
+    navHome.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navHome);
+    });
+
+    navStats.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navStats);
+      alert('Stats coming soon!');
+    });
+
+    navHistory.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navHistory);
+      alert('Game history coming soon!');
+    });
+
+    navAccount.addEventListener('click', (e) => {
+      e.preventDefault();
+      setActiveNav(navAccount);
+      if (!currentUser) {
+        loginModal.classList.add('open');
+      } else {
+        alert(`Account Info:\nName: ${currentUser.name}\nPhone: ${currentUser.phone}\nBalance: $${balance}`);
+      }
+    });
+
+    function setActiveNav(item) {
+      [navHome, navStats, navHistory, navAccount].forEach(nav => {
+        nav.classList.remove('active');
+      });
+      item.classList.add('active');
+    }
+
+    // Auto-generate fake winners
+    setInterval(() => {
+      if (Math.random() > 0.5) {
+        const fakeWin = 50 + Math.random() * 5000;
+        const isDemo = Math.random() > 0.5;
+        addWinner(fakeWin);
+      }
+    }, 8000);
+
+    // Initialize
+    initBoard();
+    toggleMode(true);
+  </script>
+</body>
+</html>

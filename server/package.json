@@ -1,0 +1,39 @@
+{
+  "name": "boombank-server",
+  "version": "1.0.0",
+  "description": "Boombank Backend Server",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
+    "twilio": "^4.19.0",
+    "nodemailer": "^6.9.7",
+    "rate-limiter-flexible": "^3.0.8",
+    "express-rate-limit": "^7.1.5",
+    "dotenv": "^16.3.1",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.7.4",
+    "axios": "^1.6.2",
+    "faker": "^6.6.6",
+    "moment": "^2.29.4",
+    "lodash": "^4.17.21",
+    "uuid": "^9.0.1",
+    "qrcode": "^1.5.3",
+    "crypto": "^1.0.1",
+    "express-validator": "^7.0.1",
+    "compression": "^1.7.4",
+    "morgan": "^1.10.0",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
