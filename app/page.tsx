@@ -64,14 +64,16 @@ export default function HomePage() {
         profit: 0,
         tilesRevealed: 0,
         startedAt: new Date(),
-        endedAt: null,
-        duration: null,
+        endedAt: undefined,
+        duration: undefined,
         riskLevel: 'medium',
         actions: [],
         gameConfig: {},
         device: 'web',
         ip: '127.0.0.1',
-        sessionId: 'mock-session'
+        sessionId: 'mock-session',
+        createdAt: new Date(),
+        updatedAt: new Date()
       };
       
       setCurrentGame(newGame);
@@ -103,7 +105,7 @@ export default function HomePage() {
           status: 'exploded',
           revealedTiles: newRevealedTiles,
           endedAt: new Date(),
-          result: 'lost',
+          result: 'loss',
         };
       } else {
         // Safe tile - continue game
