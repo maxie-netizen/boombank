@@ -51,7 +51,7 @@ export default function HomePage() {
         id: Date.now().toString(),
         userId: mockUser.id,
         betAmount: parseFloat(params.betAmount),
-        gameType: 'classic',
+        gameType: 'minesweeper',
         gridSize: 5,
         bombCount: 5,
         bombPositions: [2, 7, 12, 17, 22], // Mock bomb positions
