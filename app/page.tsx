@@ -59,7 +59,7 @@ export default function HomePage() {
         currentMultiplier: 1.0,
         maxMultiplier: 2.5,
         status: 'active',
-        result: pending,
+        result: 'pending',
         winnings: 0,
         profit: 0,
         tilesRevealed: 0,
@@ -103,7 +103,7 @@ export default function HomePage() {
           status: 'exploded',
           revealedTiles: newRevealedTiles,
           endedAt: new Date().toISOString(),
-          result: 'lost'
+          result: 'lost',
         };
       } else {
         // Safe tile - continue game
