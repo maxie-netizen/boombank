@@ -59,7 +59,7 @@ export default function HomePage() {
         currentMultiplier: 1.0,
         maxMultiplier: 2.5,
         status: 'active',
-        result: null,
+        result: pending,
         winnings: 0,
         profit: 0,
         tilesRevealed: 0,
