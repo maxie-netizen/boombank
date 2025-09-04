@@ -19,11 +19,11 @@ COPY server/package*.json ./server/
 # Stage 2: Dependencies installation
 FROM base AS deps
 # Install frontend dependencies
-RUN npm ci --only=production --silent
+RUN npm i
 
 # Install backend dependencies
 WORKDIR /app/server
-RUN npm ci --only=production --silent
+RUN npm i
 
 # Stage 3: Frontend build
 FROM base AS frontend-build
@@ -33,7 +33,7 @@ WORKDIR /app
 COPY . .
 
 # Install all dependencies for build
-RUN npm ci
+RUN npm i
 
 # Build the Next.js application
 RUN npm run build
