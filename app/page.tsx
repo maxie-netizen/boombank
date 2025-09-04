@@ -63,7 +63,7 @@ export default function HomePage() {
         winnings: 0,
         profit: 0,
         tilesRevealed: 0,
-        startedAt: new Date().toISOString(),
+        startedAt: new Date(),
         endedAt: null,
         duration: null,
         riskLevel: 'medium',
@@ -102,7 +102,7 @@ export default function HomePage() {
           ...prev,
           status: 'exploded',
           revealedTiles: newRevealedTiles,
-          endedAt: new Date().toISOString(),
+          endedAt: new Date(),
           result: 'lost',
         };
       } else {
